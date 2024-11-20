@@ -24,8 +24,7 @@ const DEFAULT_ADDRESS: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 #[tokio::main(flavor = "current_thread")]
 #[tracing::instrument]
 async fn main() -> anyhow::Result<()> {
-    let format = fmt::format().with_ansi(false);
-    tracing_subscriber::fmt().event_format(format).init();
+    init_tracing()?;
 
     let config = Config::from_env()?;
     info!(config.host, config.username, config.port, %config.address);
@@ -188,4 +187,42 @@ fn env_or_default(variable: &str, default: &str) -> String {
             default.to_string()
         }
     }
+}
+
+#[cfg(feature = "loki")]
+fn init_tracing() -> anyhow::Result<()> {
+    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+    let fmt_layer = fmt::layer().with_ansi(false);
+
+    if let Ok(loki_url) = env::var("LOKI_URL") {
+        let (loki_layer, task) = tracing_loki::builder()
+            .label("service_name", "mortigilo")?
+            .build_url(loki_url.parse()?)?;
+
+        tokio::spawn(task);
+
+        tracing_subscriber::registry()
+            .with(fmt_layer)
+            .with(loki_layer)
+            .init();
+
+        info!(loki_url, "logging to loki");
+    } else {
+        tracing_subscriber::registry().with(fmt_layer).init();
+
+        info!("loki url not set, logging to console");
+    }
+
+    Ok(())
+}
+
+#[cfg(not(feature = "loki"))]
+fn init_tracing() -> anyhow::Result<()> {
+    let format = fmt::format().with_ansi(false);
+    tracing_subscriber::fmt().event_format(format).init();
+
+    info!("loki feature not enabled, logging to console");
+
+    Ok(())
 }

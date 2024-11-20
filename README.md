@@ -39,6 +39,8 @@ initContainers:
         value: "9000"
       - name: ADDRESS
         value: "0.0.0.0"
+      - name: LOKI_URL
+        value: "http://loki-api.loki.svc.cluster.local:3100"
     ports:
       - containerPort: 9000
 containers:
@@ -66,8 +68,11 @@ If not running as a sidecar container, the mortigilo container can be used under
 | QBITTORRENT_PASSWORD |                         | Password of the qbittorrent user        |
 | PORT                 | `9000`                  | Port to serve the probe endpoints on    |
 | ADDRESS              | `0.0.0.0`               | Address to serve the probe endpoints on |
+| LOKI_URL             |                         | Enables sending logs to loki if set     |
 
 Note that the transport of the host is important. If `http` is specified but it redirects to `https`, the container will not be able to log into the qbittorrent API and all requests will fail.
+
+`LOKI_URL` is optional and only considered if the `loki` feature is enabled, which it is by default.
 
 ## Determining health
 
