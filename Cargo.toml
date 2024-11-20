@@ -13,13 +13,18 @@ anyhow = "1.0.93"
 axum = "0.7.7"
 tokio = { version = "1.41.1", features = ["macros", "rt"] }
 tracing = "0.1.40"
-tracing-loki = { version = "0.2.5", optional = true }
 tracing-subscriber = "0.3.18"
 
 [dependencies.qbit-rs]
 version = "0.4.6"
 default-features = false
 features = ["rustls-tls"]
+
+[dependencies.tracing-loki]
+version = "0.2.5"
+optional = true
+default-features = false
+features = ["compat-0-2-1", "rustls"]
 
 [[bin]]
 name = "mortigilo"
